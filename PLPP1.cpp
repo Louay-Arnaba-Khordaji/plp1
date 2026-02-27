@@ -11,10 +11,9 @@ double U[N];
 double U_new[N];
 
 void initialize() {
-    for (int i = 0; i < N; i++) {
-        U[i] = 0.0;
-        U_new[i] = 0.0;
-    }
+    
+    U[N] = { 0.0 };
+    U_new[N] = { 0.0 };
     U[N / 2] = 100.0;
 }
 
@@ -51,7 +50,7 @@ void Sequential_Update_timing() {
             U_new[i] = 0.5 * (U[i - 1] + U[i + 1]);
 
         for (int i = 0; i < N; i++)
-            U[i] = U_new[i];
+			memcpy(U, U_new, N * sizeof(double));                                   
     }
 }
 
@@ -89,22 +88,21 @@ void parallel_Update_timing() {
                 U_new[i] = 0.5 * (U[i - 1] + U[i + 1]);
 
 #pragma omp for
-            for (int i = 0; i < N; i++)
-                U[i] = U_new[i];
+            for (int i = 0; i < N; i++){
+                memcpy(U, U_new, N * sizeof(double));
         }
+    }
     }
 }
 
 int main() {
 
-    // Sequential snapshots
     ofstream csv_seq("snapshots_seq.csv");
     initialize();
     Sequential_Update_snapshots(csv_seq);
     csv_seq.close();
     cout << "Sequential snapshots saved.\n";
 
-    // Parallel snapshots for each thread count
     int Threads[4] = { 1, 2, 4, 8 };
 
     for (int th : Threads) {
@@ -122,7 +120,6 @@ int main() {
         cout << "Parallel snapshots saved for " << th << " threads.\n";
     }
 
-    // Timing + speedup
     initialize();
     double start_seq = omp_get_wtime();
     Sequential_Update_timing();
