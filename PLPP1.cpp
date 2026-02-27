@@ -4,16 +4,18 @@
 #include <string>
 using namespace std;
 
-const int N = 500;
-const int T = 500;
+const int N = 50000;
+const int T = 2000;
 
 double U[N];
 double U_new[N];
 
 void initialize() {
     
-    U[N] = { 0.0 };
-    U_new[N] = { 0.0 };
+    for (int i = 0; i < N; i++) {
+        U[i] = 0.0;
+        U_new[i] = 0.0;
+    }
     U[N / 2] = 100.0;
 }
 
@@ -41,16 +43,13 @@ void Sequential_Update_snapshots(ofstream& csv) {
             write_snapshot(csv, t);
     }
 }
-
 void Sequential_Update_timing() {
-
     for (int t = 1; t <= T; t++) {
 
         for (int i = 1; i < N - 1; i++)
             U_new[i] = 0.5 * (U[i - 1] + U[i + 1]);
 
-        for (int i = 0; i < N; i++)
-			memcpy(U, U_new, N * sizeof(double));                                   
+        memcpy(U, U_new, N * sizeof(double));
     }
 }
 
@@ -79,22 +78,19 @@ void parallel_Update_snapshots(ofstream& csv) {
 
 void parallel_Update_timing() {
 
-#pragma omp parallel
-    {
-        for (int t = 1; t <= T; t++) {
 
+        for (int t = 1; t <= T; t++) {
+#pragma omp parallel
+            {
 #pragma omp for
             for (int i = 1; i < N - 1; i++)
                 U_new[i] = 0.5 * (U[i - 1] + U[i + 1]);
 
-#pragma omp for
-            for (int i = 0; i < N; i++){
-                memcpy(U, U_new, N * sizeof(double));
+#pragma omp single
+            memcpy(U, U_new, N * sizeof(double));
         }
     }
-    }
 }
-
 int main() {
 
     ofstream csv_seq("snapshots_seq.csv");
