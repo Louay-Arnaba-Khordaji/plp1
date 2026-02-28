@@ -52,11 +52,10 @@ void Sequential_Update_timing() {
 void parallel_Update_snapshots(ofstream& csv) {
 
     write_snapshot(csv, 0);
-
+#pragma omp parallel
+    {
     for (int t = 1; t <= T; t++) {
 
-#pragma omp parallel
-        {
 #pragma omp for
             for (int i = 1; i < N - 1; i++)
                 U_new[i] = 0.5 * (U[i - 1] + U[i + 1]);
@@ -76,10 +75,10 @@ void parallel_Update_snapshots(ofstream& csv) {
 
 void parallel_Update_timing() {
 
+#pragma omp parallel default(none) shared(U)
+    {
     for (int t = 1; t <= T; t++) {
 
-#pragma omp parallel
-        {
 #pragma omp for
             for (int i = 1; i < N - 1; i++)
                 U_new[i] = 0.5 * (U[i - 1] + U[i + 1]);
