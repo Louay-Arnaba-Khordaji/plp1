@@ -52,15 +52,17 @@ void Sequential_Update_timing() {
 void parallel_Update_snapshots(ofstream& csv) {
 
     write_snapshot(csv, 0);
+
     double* current = U;
     double* next = U_new;
-#pragma omp parallel
+
+#pragma omp parallel shared(current, next)
     {
         for (int t = 1; t <= T; t++) {
 
 #pragma omp for
             for (int i = 1; i < N - 1; i++)
-                U_new[i] = 0.5 * (U[i - 1] + U[i + 1]);
+                next[i] = 0.5 * (current[i - 1] + current[i + 1]);
 
 #pragma omp barrier
 
@@ -69,9 +71,12 @@ void parallel_Update_snapshots(ofstream& csv) {
                 double* temp = current;
                 current = next;
                 next = temp;
+
                 if (t % 50 == 0)
                     write_snapshot(csv, t);
             }
+
+#pragma omp barrier
         }
     }
 }
@@ -146,6 +151,6 @@ int main() {
             << " | Efficiency: " << efficiency << endl;
     }
 
-	system("pause");
+    system("pause");
     return 0;
 }
