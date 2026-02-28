@@ -56,7 +56,7 @@ void parallel_Update_snapshots(ofstream& csv) {
     double* next = U_new;
 #pragma omp parallel
     {
-    for (int t = 1; t <= T; t++) {
+        for (int t = 1; t <= T; t++) {
 
 #pragma omp for
             for (int i = 1; i < N - 1; i++)
@@ -64,13 +64,14 @@ void parallel_Update_snapshots(ofstream& csv) {
 
 #pragma omp barrier
 
-            double* temp = current;
-            current = next;
-            next = temp;
-
 #pragma omp single
-            if (t % 50 == 0)
-                write_snapshot(csv, t);
+            {
+                double* temp = current;
+                current = next;
+                next = temp;
+                if (t % 50 == 0)
+                    write_snapshot(csv, t);
+            }
         }
     }
 }
@@ -88,9 +89,12 @@ void parallel_Update_timing() {
 
 #pragma omp barrier
 
-            double* temp = current;
-            current = next;
-            next = temp;
+#pragma omp single
+            {
+                double* temp = current;
+                current = next;
+                next = temp;
+            }
         }
     }
 }
